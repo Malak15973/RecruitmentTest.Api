@@ -23,7 +23,6 @@ namespace RecruitmentTest.Domain.Interfaces
         void Delete(T entity);
         void DeleteRange(IEnumerable<T> entites);
         void Update(T entity);
-        int Count();
-
+        int Count(Expression<Func<T, bool>> filter = null!, string includeProperties = null!);
     }
 }

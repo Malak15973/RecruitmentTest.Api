@@ -216,6 +216,42 @@ namespace RecruitmentTest.Api.Controllers
                 return BadRequest(response);
             }
         }
+        [Authorize(Roles = "User")]
+        [HttpGet]
+
+        public async Task<IActionResult> GetNotAppliedJobs([FromQuery] int page = 1, [FromQuery] int pageSize = 3, [FromQuery] string name = "")
+        {
+            var response = new ApiResponse() { IsSuccess = false, StatusCode = HttpStatusCode.BadRequest };
+
+            try
+            {
+                var userId = User.Claims.Where(a => a.Type == "uid").FirstOrDefault().Value;
+
+                var data = await unitOfWork.Jobs.GetAllAsync(filter: f => f.Name.Contains(name)&&!f.JobApplicationUsers.Any(ja=>ja.ApplicationUserId==userId), skip: (page - 1) * pageSize, take: pageSize,
+                    includeProperties: "JobResponsabilities.Responsability,JobSkills.Skill,Category,JobApplicationUsers");
+
+                var totalCount = unitOfWork.Jobs.Count(filter: f => f.Name.Contains(name) && !f.JobApplicationUsers.Any(ja => ja.ApplicationUserId == userId), includeProperties: "JobApplicationUsers");
+                var totalPages = (int)Math.Ceiling((double)totalCount / pageSize);
+
+                var result = new
+                {
+                    IsSuccess = true,
+                    StatusCode = HttpStatusCode.OK,
+                    TotalCount = totalCount,
+                    TotalPages = totalPages,
+                    CurrentPage = page,
+                    PageSize = pageSize,
+                    Result = mapper.Map<IEnumerable<JobDto>>(data)
+                };
+                return Ok(result);
+            }
+            catch (Exception e)
+            {
+                response.ErrorMessages.Add(e.ToString());
+                return BadRequest(response);
+            }
+        }
+
 
         [Authorize(Roles = "User")]
         [HttpPost("{jobId}")]
