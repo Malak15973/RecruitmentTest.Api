@@ -10,6 +10,7 @@ using RecruitmentTest.Domain.Helpers;
 using RecruitmentTest.Domain.Models;
 using System.Linq.Expressions;
 using System.Net;
+using System.Security.Claims;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace RecruitmentTest.Api.Controllers
@@ -234,10 +235,9 @@ namespace RecruitmentTest.Api.Controllers
                     return BadRequest(response);
                 }
 
-                bool isOpen = (job.JobApplicationUsers.Count < job.MaxApplicants)&&(DateTime.Now>=job.ValidFrom&& DateTime.Now <= job.ValidTo);
                 var userId = User.Claims.Where(a => a.Type == "uid").FirstOrDefault().Value;
 
-                if (isOpen) {
+                if (JobsHelper.IsOpenJob(job)&&await unitOfWork.ApplicationUsersJobs.FindAsync(aj=>aj.ApplicationUserId==userId&&aj.JobId==jobId)==null) {
                     await unitOfWork.ApplicationUsersJobs.AddAsync(new ApplicationUserJob()
                     {
                         JobId = jobId,
@@ -250,7 +250,7 @@ namespace RecruitmentTest.Api.Controllers
                 }
                 else
                 {
-                    response.ErrorMessages.Add("Job IS Closed");
+                    response.ErrorMessages.Add("Job Is Closed");
                     return BadRequest(response);
                 }
             }

@@ -3,13 +3,11 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.7.34031.279
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RecruitmentTest.Api", "RecruitmentTest.Api\RecruitmentTest.Api.csproj", "{03DAC599-C63D-49C4-A604-FF801B53D161}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RecruitmentTest.Api", "RecruitmentTest.Api\RecruitmentTest.Api.csproj", "{03DAC599-C63D-49C4-A604-FF801B53D161}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RecruitmentTest.Domain", "RecruitmentTest.Domain\RecruitmentTest.Domain.csproj", "{198791DA-B028-426C-B614-94A9BB008453}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RecruitmentTest.Domain", "RecruitmentTest.Domain\RecruitmentTest.Domain.csproj", "{198791DA-B028-426C-B614-94A9BB008453}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RecruitmentTest.Services", "RecruitmentTest.Services\RecruitmentTest.Services.csproj", "{3789220B-6C4E-494F-B135-439AD83F845A}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RecruitmentTest.DataAccess", "RecruitmentTest.DataAccess\RecruitmentTest.DataAccess.csproj", "{516822F8-BCB3-4401-BAE1-2A5D1E5AC9A4}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RecruitmentTest.DataAccess", "RecruitmentTest.DataAccess\RecruitmentTest.DataAccess.csproj", "{516822F8-BCB3-4401-BAE1-2A5D1E5AC9A4}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -25,10 +23,6 @@ Global
 		{198791DA-B028-426C-B614-94A9BB008453}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{198791DA-B028-426C-B614-94A9BB008453}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{198791DA-B028-426C-B614-94A9BB008453}.Release|Any CPU.Build.0 = Release|Any CPU
-		{3789220B-6C4E-494F-B135-439AD83F845A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{3789220B-6C4E-494F-B135-439AD83F845A}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{3789220B-6C4E-494F-B135-439AD83F845A}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{3789220B-6C4E-494F-B135-439AD83F845A}.Release|Any CPU.Build.0 = Release|Any CPU
 		{516822F8-BCB3-4401-BAE1-2A5D1E5AC9A4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{516822F8-BCB3-4401-BAE1-2A5D1E5AC9A4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{516822F8-BCB3-4401-BAE1-2A5D1E5AC9A4}.Release|Any CPU.ActiveCfg = Release|Any CPU

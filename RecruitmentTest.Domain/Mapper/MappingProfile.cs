@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using RecruitmentTest.Domain.Dtos;
 using RecruitmentTest.Domain.Dtos.Jobs;
+using RecruitmentTest.Domain.Helpers;
 using RecruitmentTest.Domain.Models;
 using System;
 using System.Collections.Generic;
@@ -25,7 +26,7 @@ namespace RecruitmentTest.Domain.Mapper
                 ReverseMap();
             CreateMap<Job, JobDto>().
                 ForMember(des => des.IsOpen, src => src.
-                MapFrom(src => (src.JobApplicationUsers.Count < src.MaxApplicants) && (DateTime.Now >= src.ValidFrom && DateTime.Now <= src.ValidTo))).
+                MapFrom(src => JobsHelper.IsOpenJob(src))).
                 ReverseMap();
 
         }
