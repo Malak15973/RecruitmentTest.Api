@@ -4,11 +4,14 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using RecruitmentTest.Domain;
+using RecruitmentTest.Domain.Dtos;
 using RecruitmentTest.Domain.Dtos.Account;
+using RecruitmentTest.Domain.Helpers;
 using RecruitmentTest.Domain.Models;
 using RecruitmentTest.Domain.Settings;
 using System.Data;
 using System.IdentityModel.Tokens.Jwt;
+using System.Net;
 using System.Security.Claims;
 using System.Text;
 
@@ -31,49 +34,59 @@ namespace RecruitmentTest.Api.Controllers
         [HttpPost]
         public async Task<IActionResult> Login([FromBody] LoginDto model)
         {
+            var response = new ApiResponse() { IsSuccess = false, StatusCode = HttpStatusCode.BadRequest };
             try
             {
-                if (ModelState.IsValid)
+                if(!ModelState.IsValid)
+                {
+                    response.ErrorMessages.AddRange(GetErrorMessagesHelper.GetErrorMessages(ModelState));
+                    return BadRequest(response);
+                }
+                else
                 {
                     var user = await userManager.FindByEmailAsync(model.Email);
-                    if (user == null)
+                    if (user != null)
                     {
-                        ModelState.AddModelError(string.Empty, "Email Or Password Is Invalid!");
-                        return BadRequest(new { errors = ModelState.Select(m => m.Value!.Errors.Select(e => e.ErrorMessage)).Where(p => p.Any()) });
-                    }
-                    var result = await signInManager.PasswordSignInAsync(user, model.Password, true, false);
-                    if (result.Succeeded)
-                    {
-                        var jwtSecurityToken = await CreateJwtToken(user);
-                        var roles = await userManager.GetRolesAsync(user);
-                        return Ok(new { data = new { Token = new JwtSecurityTokenHandler().WriteToken(jwtSecurityToken), ExpiresOn = jwtSecurityToken.ValidTo, Role = roles.FirstOrDefault() } });
-                    }
-                    else
-                    {
-                        ModelState.AddModelError(string.Empty, "Email Or Password Is Invalid!");
-                        return BadRequest(new { errors = ModelState.Select(m => m.Value!.Errors.Select(e => e.ErrorMessage)).Where(p => p.Any()) });
+                        var result = await signInManager.PasswordSignInAsync(user, model.Password, true, false);
+                        if (result.Succeeded)
+                        {
+                            var jwtSecurityToken = await CreateJwtToken(user);
+                            var roles = await userManager.GetRolesAsync(user);
+                            response.Result = new { Token = new JwtSecurityTokenHandler().WriteToken(jwtSecurityToken), ExpiresOn = jwtSecurityToken.ValidTo, Role = roles.FirstOrDefault() };
+                            response.IsSuccess = true;
+                            response.StatusCode = HttpStatusCode.OK;
+                            return Ok(response);
+                        }
+
                     }
                 }
-                return BadRequest(new { errors = ModelState.Select(m => m.Value!.Errors.Select(e => e.ErrorMessage)).Where(p => p.Any()) });
+                response.ErrorMessages.Add("Email Or Password Is Invalid!");
+                return BadRequest(response);
             }
             catch (Exception e)
             {
-                ModelState.AddModelError(string.Empty, $"{e}");
-                return BadRequest(new { errors = ModelState.Select(m => m.Value!.Errors.Select(e => e.ErrorMessage)).Where(p => p.Any()) });
+                response.ErrorMessages.Add(e.ToString());
+                return BadRequest(response);
             }
         }
 
         [HttpPost]
         public async Task<IActionResult> Register([FromBody] RegisterDto model)
         {
+            var response = new ApiResponse() { IsSuccess = false, StatusCode = HttpStatusCode.BadRequest };
             try
             {
-                if (ModelState.IsValid)
+                if (!ModelState.IsValid)
+                {
+                    response.ErrorMessages.AddRange(GetErrorMessagesHelper.GetErrorMessages(ModelState));
+                    return BadRequest(response);
+                }
+                else
                 {
                     if (await userManager.FindByEmailAsync(model.Email) != null)
                     {
-                        ModelState.AddModelError(string.Empty, $"User Is Already Exist");
-                        return BadRequest(new { errors = ModelState.Select(m => m.Value.Errors.Select(e => e.ErrorMessage)).Where(p => p.Any()) });
+                        response.ErrorMessages.Add("User Is Already Exist");
+                        return BadRequest(response);
                     }
                     ApplicationUser user = new()
                     {
@@ -87,24 +100,21 @@ namespace RecruitmentTest.Api.Controllers
                     if (result.Succeeded)
                     {
                         await userManager.AddToRoleAsync(user, "User");
-                        return Ok();
+                        response.IsSuccess = true;
+                        response.StatusCode = HttpStatusCode.OK;
+                        return Ok(response);
                     }
                     else
                     {
-                        foreach (var error in result.Errors)
-                        {
-                            ModelState.AddModelError(string.Empty, $"{error.Description}");
-                            return BadRequest(new { errors = ModelState.Select(m => m.Value.Errors.Select(e => e.ErrorMessage)).Where(p => p.Any()) });
-                        }
-                        return BadRequest(new { errors = ModelState.Select(m => m.Value.Errors.Select(e => e.ErrorMessage)).Where(p => p.Any()) });
+                        response.ErrorMessages.AddRange(result.Errors.Select(e => e.Description));
                     }
                 }
-                return BadRequest(new { errors = ModelState.Select(m => m.Value!.Errors.Select(e => e.ErrorMessage)).Where(p => p.Any()) });
+                return BadRequest(response);
             }
             catch (Exception e)
             {
-                ModelState.AddModelError(string.Empty, $"{e}");
-                return BadRequest(new { errors = ModelState.Select(m => m.Value!.Errors.Select(e => e.ErrorMessage)).Where(p => p.Any()) });
+                response.ErrorMessages.Add(e.ToString());
+                return BadRequest(response);
             }
         }
 

@@ -7,6 +7,7 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using RecruitmentTest.DataAccess;
 using RecruitmentTest.Domain;
+using RecruitmentTest.Domain.Dtos;
 using RecruitmentTest.Domain.Mapper;
 using RecruitmentTest.Domain.Models;
 using RecruitmentTest.Domain.Settings;
@@ -49,8 +50,8 @@ builder.Services.AddSwaggerGen(c => {
 });
 
 builder.Services.AddControllersWithViews()
-  .AddNewtonsoftJson(options =>
-    options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore
+  .AddNewtonsoftJson(options => 
+  options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore
 );
 builder.Services.Configure<ApiBehaviorOptions>(options =>
 {
