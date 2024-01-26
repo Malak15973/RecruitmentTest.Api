@@ -57,10 +57,17 @@ builder.Services.Configure<ApiBehaviorOptions>(options =>
 {
     options.SuppressModelStateInvalidFilter = true;
 });
+
+
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(
         Configuration.GetConnectionString("RecruitmentTestDBConnection"),
-            b => b.MigrationsAssembly(typeof(AppDbContext).Assembly.FullName)));
+        sqlServerOptionsAction: sqlOptions =>
+        {
+            sqlOptions.EnableRetryOnFailure();
+            sqlOptions.MigrationsAssembly(typeof(AppDbContext).Assembly.FullName);
+        }));
+
 
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>().
     AddEntityFrameworkStores<AppDbContext>()
@@ -112,6 +119,20 @@ if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
+}
+else
+{
+    app.UseSwagger(c =>
+    {
+        c.RouteTemplate = "/swagger/{documentName}/swagger.json";
+    });
+    app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "RecruitmentTest.Api"));
+    app.UseSwaggerUI(c =>
+    {
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "PollutedEpicenters");
+        c.InjectStylesheet("/swagger/custom.css");
+        c.RoutePrefix = String.Empty;
+    });
 }
 app.UseHttpsRedirection();
 app.UseStaticFiles();
