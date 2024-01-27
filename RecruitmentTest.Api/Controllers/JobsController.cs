@@ -88,6 +88,7 @@ namespace RecruitmentTest.Api.Controllers
                     return BadRequest(response);
                 }
                 unitOfWork.Jobs.Delete(job);
+		unitOfWork.Complete();	
                 response.IsSuccess = true;
                 response.StatusCode = HttpStatusCode.OK;
                 return Ok(response);
@@ -144,6 +145,7 @@ namespace RecruitmentTest.Api.Controllers
 
 
                     unitOfWork.Jobs.Update(job);
+		    unitOfWork.Complete();		
                     response.IsSuccess = true;
                     response.StatusCode = HttpStatusCode.OK;
                     return Ok(response);
