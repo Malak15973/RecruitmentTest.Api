@@ -48,19 +48,7 @@ namespace RecruitmentTest.Api.Controllers
                         response.ErrorMessages.Add($"No Category With This Id {model.CategoryId}");
                         return BadRequest(response);
                     }
-
-                    Job job = new()
-                    {
-                        Name = model.Name,
-                        Description = model.Description,
-                        CategoryId = model.CategoryId,
-                        ValidTo = model.ValidTo,
-                        ValidFrom = model.ValidFrom,
-                        MaxApplicants = model.MaxApplicants,
-                        JobResponsabilities = model.JobResponsabilities.Select(j => new JobResponsability() { ResponsabilityId = j }).ToList(),
-                        JobSkills = model.JobSkills.Select(j => new JobSkill() { SkillId = j }).ToList()
-                    };
-                    await unitOfWork.Jobs.AddAsync(job);
+                    await unitOfWork.Jobs.AddAsync(mapper.Map<Job>(model));
                     unitOfWork.Complete();
                     response.IsSuccess = true;
                     response.StatusCode = HttpStatusCode.OK;
@@ -88,7 +76,7 @@ namespace RecruitmentTest.Api.Controllers
                     return BadRequest(response);
                 }
                 unitOfWork.Jobs.Delete(job);
-		unitOfWork.Complete();	
+		        unitOfWork.Complete();	
                 response.IsSuccess = true;
                 response.StatusCode = HttpStatusCode.OK;
                 return Ok(response);
@@ -102,7 +90,7 @@ namespace RecruitmentTest.Api.Controllers
 
         [Authorize(Roles = "Admin")]
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateJob(int id, [FromBody] AddJobDto model)
+        public async Task<IActionResult> UpdateJob(int id, [FromBody] UpdateJobDto model)
         {
             var response = new ApiResponse() { IsSuccess = false, StatusCode = HttpStatusCode.BadRequest };
 
@@ -128,24 +116,12 @@ namespace RecruitmentTest.Api.Controllers
                         return BadRequest(response);
                     }
 
-
-                    job.Name = model.Name;
-                    job.Description = model.Description;
-                    job.CategoryId = model.CategoryId;
-                    job.MaxApplicants = model.MaxApplicants;
-                    job.ValidFrom = model.ValidFrom;
-                    job.ValidTo = model.ValidTo;
-
                     unitOfWork.JobsResponsabilities.DeleteRange(job.JobResponsabilities);
                     unitOfWork.JobsSkills.DeleteRange(job.JobSkills);
 
 
-                    job.JobResponsabilities = model.JobResponsabilities.Select(j => new JobResponsability() { ResponsabilityId = j }).ToList();
-                    job.JobSkills = model.JobSkills.Select(j => new JobSkill() { SkillId = j }).ToList();
-
-
-                    unitOfWork.Jobs.Update(job);
-		    unitOfWork.Complete();		
+                    unitOfWork.Jobs.Update(mapper.Map<Job>(model));
+        		    unitOfWork.Complete();		
                     response.IsSuccess = true;
                     response.StatusCode = HttpStatusCode.OK;
                     return Ok(response);

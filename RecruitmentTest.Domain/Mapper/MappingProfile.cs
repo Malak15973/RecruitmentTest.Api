@@ -32,6 +32,15 @@ namespace RecruitmentTest.Domain.Mapper
                 MapFrom(src => JobsHelper.IsOpenJob(src))).
                 ReverseMap();
 
+            CreateMap<AddJobDto, Job>().
+                ForMember(des => des.JobSkills, src => src.MapFrom(src => src.JobSkills.Select(j => new JobSkill() { SkillId = j }))).
+                ForMember(des => des.JobResponsabilities, src => src.MapFrom(src => src.JobResponsabilities.Select(j => new JobResponsability() { ResponsabilityId = j })))
+                ;
+            CreateMap<UpdateJobDto, Job>().
+                ForMember(des => des.JobSkills, src => src.MapFrom(src => src.JobSkills.Select(j => new JobSkill() { SkillId = j }))).
+                ForMember(des => des.JobResponsabilities, src => src.MapFrom(src => src.JobResponsabilities.Select(j => new JobResponsability() { ResponsabilityId = j })))
+                ;
+
         }
     }
 }
