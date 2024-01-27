@@ -16,6 +16,9 @@ namespace RecruitmentTest.Domain.Mapper
         public MappingProfile()
         {
             CreateMap<Category, SelectListDto>().ReverseMap();
+            CreateMap<Skill, SelectListDto>().ReverseMap();
+            CreateMap<Responsability, SelectListDto>().ReverseMap();
+
             CreateMap<JobSkill, SelectListDto>().
                 ForMember(des => des.Name, src => src.MapFrom(src => src.Skill.Name)).
                 ForMember(des => des.Id, src => src.MapFrom(src => src.Skill.Id)).
