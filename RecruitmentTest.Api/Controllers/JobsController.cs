@@ -43,11 +43,30 @@ namespace RecruitmentTest.Api.Controllers
                 }
                 else
                 {
+                    #region check if any request id is wrong 
                     if (await unitOfWork.Categories.GetByIdAsync(model.CategoryId) == null)
                     {
                         response.ErrorMessages.Add($"No Category With This Id {model.CategoryId}");
                         return BadRequest(response);
                     }
+                    for (int i = 0; i < model.JobSkills.Count; i++)
+                    {
+                        if (await unitOfWork.Skills.GetByIdAsync(model.JobSkills[i]) == null)
+                        {
+                            response.ErrorMessages.Add($"No Skill With This Id {model.JobSkills[i]}");
+                            return BadRequest(response);
+                        }
+                    }
+                    for (int i = 0; i < model.JobResponsabilities.Count; i++)
+                    {
+                        if (await unitOfWork.JobsResponsabilities.GetByIdAsync(model.JobResponsabilities[i]) == null)
+                        {
+                            response.ErrorMessages.Add($"No Skill With This Id {model.JobResponsabilities[i]}");
+                            return BadRequest(response);
+                        }
+                    }
+                    #endregion
+
                     await unitOfWork.Jobs.AddAsync(mapper.Map<Job>(model));
                     unitOfWork.Complete();
                     response.IsSuccess = true;
@@ -110,11 +129,29 @@ namespace RecruitmentTest.Api.Controllers
                         return BadRequest(response);
                     }
 
+                    #region check if any request id is wrong 
                     if (await unitOfWork.Categories.GetByIdAsync(model.CategoryId) == null)
                     {
                         response.ErrorMessages.Add($"No Category With This Id {model.CategoryId}");
                         return BadRequest(response);
                     }
+                    for (int i = 0; i < model.JobSkills.Count; i++)
+                    {
+                        if (await unitOfWork.Skills.GetByIdAsync(model.JobSkills[i]) == null)
+                        {
+                            response.ErrorMessages.Add($"No Skill With This Id {model.JobSkills[i]}");
+                            return BadRequest(response);
+                        }
+                    }
+                    for (int i = 0; i < model.JobResponsabilities.Count; i++)
+                    {
+                        if (await unitOfWork.JobsResponsabilities.GetByIdAsync(model.JobResponsabilities[i]) == null)
+                        {
+                            response.ErrorMessages.Add($"No Skill With This Id {model.JobResponsabilities[i]}");
+                            return BadRequest(response);
+                        }
+                    }
+                    #endregion
 
                     unitOfWork.JobsResponsabilities.DeleteRange(job.JobResponsabilities);
                     unitOfWork.JobsSkills.DeleteRange(job.JobSkills);
@@ -250,7 +287,7 @@ namespace RecruitmentTest.Api.Controllers
                 }
 
                 var userId = User.Claims.Where(a => a.Type == "uid").FirstOrDefault().Value;
-
+                //check is job opened and validate that the user does not apply to this job before
                 if (JobsHelper.IsOpenJob(job)&&await unitOfWork.ApplicationUsersJobs.FindAsync(aj=>aj.ApplicationUserId==userId&&aj.JobId==jobId)==null) {
                     await unitOfWork.ApplicationUsersJobs.AddAsync(new ApplicationUserJob()
                     {
