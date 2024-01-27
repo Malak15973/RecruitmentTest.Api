@@ -129,7 +129,7 @@ else
     app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "RecruitmentTest.Api"));
     app.UseSwaggerUI(c =>
     {
-        c.SwaggerEndpoint("/swagger/v1/swagger.json", "PollutedEpicenters");
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "RecruitmentTest.Api");
         c.InjectStylesheet("/swagger/custom.css");
         c.RoutePrefix = String.Empty;
     });
