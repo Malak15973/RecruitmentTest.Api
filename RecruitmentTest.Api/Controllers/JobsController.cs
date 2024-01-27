@@ -1,17 +1,10 @@
-﻿using AutoMapper;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
-using RecruitmentTest.Domain;
 using RecruitmentTest.Domain.Dtos;
 using RecruitmentTest.Domain.Dtos.Jobs;
 using RecruitmentTest.Domain.Helpers;
-using RecruitmentTest.Domain.Models;
-using System.Linq.Expressions;
+using RecruitmentTest.Services.IServices;
 using System.Net;
-using System.Security.Claims;
-using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace RecruitmentTest.Api.Controllers
 {
@@ -19,13 +12,11 @@ namespace RecruitmentTest.Api.Controllers
     [ApiController]
     public class JobsController : ControllerBase
     {
-        private readonly IMapper mapper;
-        private readonly IUnitOfWork unitOfWork;
+        private readonly IJobsService jobsService;
 
-        public JobsController(IMapper mapper,IUnitOfWork unitOfWork)
+        public JobsController(IJobsService jobsService)
         {
-            this.mapper = mapper;
-            this.unitOfWork = unitOfWork;
+            this.jobsService = jobsService;
         }
 
         [Authorize(Roles = "Admin")]
@@ -34,77 +25,27 @@ namespace RecruitmentTest.Api.Controllers
         {
             var response = new ApiResponse() { IsSuccess = false, StatusCode = HttpStatusCode.BadRequest };
 
-            try
+            if (!ModelState.IsValid)
             {
-                if (!ModelState.IsValid)
-                {
-                    response.ErrorMessages.AddRange(GetErrorMessagesHelper.GetErrorMessages(ModelState));
-                    return BadRequest(response);
-                }
-                else
-                {
-                    #region check if any request id is wrong 
-                    if (await unitOfWork.Categories.GetByIdAsync(model.CategoryId) == null)
-                    {
-                        response.ErrorMessages.Add($"No Category With This Id {model.CategoryId}");
-                        return BadRequest(response);
-                    }
-                    for (int i = 0; i < model.JobSkills.Count; i++)
-                    {
-                        if (await unitOfWork.Skills.GetByIdAsync(model.JobSkills[i]) == null)
-                        {
-                            response.ErrorMessages.Add($"No Skill With This Id {model.JobSkills[i]}");
-                            return BadRequest(response);
-                        }
-                    }
-                    for (int i = 0; i < model.JobResponsabilities.Count; i++)
-                    {
-                        if (await unitOfWork.JobsResponsabilities.GetByIdAsync(model.JobResponsabilities[i]) == null)
-                        {
-                            response.ErrorMessages.Add($"No Skill With This Id {model.JobResponsabilities[i]}");
-                            return BadRequest(response);
-                        }
-                    }
-                    #endregion
-
-                    await unitOfWork.Jobs.AddAsync(mapper.Map<Job>(model));
-                    unitOfWork.Complete();
-                    response.IsSuccess = true;
-                    response.StatusCode = HttpStatusCode.OK;
-                    return Ok(response);
-                }
+                response.ErrorMessages.AddRange(GetErrorMessagesHelper.GetErrorMessages(ModelState));
+                return BadRequest(response);
             }
-            catch (Exception e)
+            else
             {
-                response.ErrorMessages.Add(e.ToString());
+                response =await jobsService.AddJob(model);
+                if (response.IsSuccess) return Ok(response);
                 return BadRequest(response);
             }
         }
+            
 
         [Authorize(Roles = "Admin")]
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteJob(int id)
         {
-            var response = new ApiResponse() { IsSuccess = false, StatusCode = HttpStatusCode.BadRequest };
-            try
-            {
-                var job = await unitOfWork.Jobs.GetByIdAsync(id);
-                if (job==null)
-                {
-                    response.ErrorMessages.Add($"No Job With This Id {id}");
-                    return BadRequest(response);
-                }
-                unitOfWork.Jobs.Delete(job);
-		        unitOfWork.Complete();	
-                response.IsSuccess = true;
-                response.StatusCode = HttpStatusCode.OK;
-                return Ok(response);
-            }
-            catch (Exception e)
-            {
-                response.ErrorMessages.Add(e.ToString());
-                return BadRequest(response);
-            }
+            var response = await jobsService.DeleteJob(id);
+            if (response.IsSuccess) return Ok(response);
+            return BadRequest(response);
         }
 
         [Authorize(Roles = "Admin")]
@@ -113,60 +54,15 @@ namespace RecruitmentTest.Api.Controllers
         {
             var response = new ApiResponse() { IsSuccess = false, StatusCode = HttpStatusCode.BadRequest };
 
-            try
+            if (!ModelState.IsValid)
             {
-                if (!ModelState.IsValid)
-                {
-                    response.ErrorMessages.AddRange(GetErrorMessagesHelper.GetErrorMessages(ModelState));
-                    return BadRequest(response);
-                }
-                else
-                {
-                    var job = await unitOfWork.Jobs.FindAsync(j => j.Id == id, new[] { "JobResponsabilities", "JobSkills" });
-                    if (job == null)
-                    {
-                        response.ErrorMessages.Add($"No Job With This Id {id}");
-                        return BadRequest(response);
-                    }
-
-                    #region check if any request id is wrong 
-                    if (await unitOfWork.Categories.GetByIdAsync(model.CategoryId) == null)
-                    {
-                        response.ErrorMessages.Add($"No Category With This Id {model.CategoryId}");
-                        return BadRequest(response);
-                    }
-                    for (int i = 0; i < model.JobSkills.Count; i++)
-                    {
-                        if (await unitOfWork.Skills.GetByIdAsync(model.JobSkills[i]) == null)
-                        {
-                            response.ErrorMessages.Add($"No Skill With This Id {model.JobSkills[i]}");
-                            return BadRequest(response);
-                        }
-                    }
-                    for (int i = 0; i < model.JobResponsabilities.Count; i++)
-                    {
-                        if (await unitOfWork.JobsResponsabilities.GetByIdAsync(model.JobResponsabilities[i]) == null)
-                        {
-                            response.ErrorMessages.Add($"No Skill With This Id {model.JobResponsabilities[i]}");
-                            return BadRequest(response);
-                        }
-                    }
-                    #endregion
-
-                    unitOfWork.JobsResponsabilities.DeleteRange(job.JobResponsabilities);
-                    unitOfWork.JobsSkills.DeleteRange(job.JobSkills);
-
-
-                    unitOfWork.Jobs.Update(mapper.Map<Job>(model));
-        		    unitOfWork.Complete();		
-                    response.IsSuccess = true;
-                    response.StatusCode = HttpStatusCode.OK;
-                    return Ok(response);
-                }
+                response.ErrorMessages.AddRange(GetErrorMessagesHelper.GetErrorMessages(ModelState));
+                return BadRequest(response);
             }
-            catch (Exception e)
+            else
             {
-                response.ErrorMessages.Add(e.ToString());
+                response = await jobsService.UpdateJob(id,model);
+                if (response.IsSuccess) return Ok(response);
                 return BadRequest(response);
             }
         }
@@ -175,96 +71,29 @@ namespace RecruitmentTest.Api.Controllers
         [HttpGet("{id}")]
         public async Task<IActionResult> GetJob(int id)
         {
-            var response = new ApiResponse() { IsSuccess = false, StatusCode = HttpStatusCode.BadRequest };
-            try
-            {
-                var job = await unitOfWork.Jobs.FindAsync(p => p.Id == id,
-                    new[] {
-                        "JobApplicationUsers","JobResponsabilities.Responsability", "JobSkills.Skill", "Category",
-                    });
-                if (job == null)
-                {
-                    response.ErrorMessages.Add($"No Job With This Id {id}");
-                    return BadRequest(response);
-                }
-                response.IsSuccess = true;
-                response.StatusCode = HttpStatusCode.OK;
-                response.Result = mapper.Map<JobDto>(job);
-                return Ok(response);
-            }
-            catch (Exception e)
-            {
-                response.ErrorMessages.Add(e.ToString());
-                return BadRequest(response);
-            }
+            var response = await jobsService.GetJob(id);
+            if (response.IsSuccess) return Ok(response);
+            return BadRequest(response);
         }
 
         [Authorize(Roles = "Admin")]
         [HttpGet]
         public async Task<IActionResult> GetAllJobs([FromQuery] int page = 1, [FromQuery] int pageSize = 3, [FromQuery] string name = "")
         {
-            var response = new ApiResponse() { IsSuccess = false, StatusCode = HttpStatusCode.BadRequest };
-
-            try
-            {
-                var data = await unitOfWork.Jobs.GetAllAsync(filter: f=>f.Name.Contains(name), skip: (page - 1) * pageSize, take: pageSize,
-                    includeProperties: "JobResponsabilities.Responsability,JobSkills.Skill,Category,JobApplicationUsers");
-
-                var totalCount = unitOfWork.Jobs.Count();
-                var totalPages = (int)Math.Ceiling((double)totalCount / pageSize);
-
-                var result = new
-                {
-                    IsSuccess = true,
-                    StatusCode = HttpStatusCode.OK,
-                    TotalCount = totalCount,
-                    TotalPages = totalPages,
-                    CurrentPage = page,
-                    PageSize = pageSize,
-                    Result = mapper.Map<IEnumerable<JobDto>>(data)
-                };
-                return Ok(result);
-            }
-            catch (Exception e)
-            {
-                response.ErrorMessages.Add(e.ToString());
-                return BadRequest(response);
-            }
+            var response = await jobsService.GetAllJobs(page,pageSize,name);
+            if (response.IsSuccess) return Ok(response);
+            return BadRequest(response);
         }
         [Authorize(Roles = "User")]
         [HttpGet]
 
         public async Task<IActionResult> GetNotAppliedJobs([FromQuery] int page = 1, [FromQuery] int pageSize = 3, [FromQuery] string name = "")
         {
-            var response = new ApiResponse() { IsSuccess = false, StatusCode = HttpStatusCode.BadRequest };
+            var userId = User.Claims.Where(a => a.Type == "uid").FirstOrDefault().Value;
 
-            try
-            {
-                var userId = User.Claims.Where(a => a.Type == "uid").FirstOrDefault().Value;
-
-                var data = await unitOfWork.Jobs.GetAllAsync(filter: f => f.Name.Contains(name)&&!f.JobApplicationUsers.Any(ja=>ja.ApplicationUserId==userId), skip: (page - 1) * pageSize, take: pageSize,
-                    includeProperties: "JobResponsabilities.Responsability,JobSkills.Skill,Category,JobApplicationUsers");
-
-                var totalCount = unitOfWork.Jobs.Count(filter: f => f.Name.Contains(name) && !f.JobApplicationUsers.Any(ja => ja.ApplicationUserId == userId), includeProperties: "JobApplicationUsers");
-                var totalPages = (int)Math.Ceiling((double)totalCount / pageSize);
-
-                var result = new
-                {
-                    IsSuccess = true,
-                    StatusCode = HttpStatusCode.OK,
-                    TotalCount = totalCount,
-                    TotalPages = totalPages,
-                    CurrentPage = page,
-                    PageSize = pageSize,
-                    Result = mapper.Map<IEnumerable<JobDto>>(data)
-                };
-                return Ok(result);
-            }
-            catch (Exception e)
-            {
-                response.ErrorMessages.Add(e.ToString());
-                return BadRequest(response);
-            }
+            var response = await jobsService.GetNotAppliedJobs(userId,page, pageSize, name);
+            if (response.IsSuccess) return Ok(response);
+            return BadRequest(response);
         }
 
 
@@ -272,44 +101,10 @@ namespace RecruitmentTest.Api.Controllers
         [HttpPost("{jobId}")]
         public async Task<IActionResult> ApplyToJob(int jobId)
         {
-            var response = new ApiResponse() { IsSuccess = false, StatusCode = HttpStatusCode.BadRequest };
-
-            try
-            {
-                var job = await unitOfWork.Jobs.FindAsync(p => p.Id == jobId,
-                new[] {
-                    "JobApplicationUsers",
-                });
-                if (await unitOfWork.Jobs.GetByIdAsync(jobId) == null)
-                {
-                    response.ErrorMessages.Add($"No Job With This Id {jobId}");
-                    return BadRequest(response);
-                }
-
-                var userId = User.Claims.Where(a => a.Type == "uid").FirstOrDefault().Value;
-                //check is job opened and validate that the user does not apply to this job before
-                if (JobsHelper.IsOpenJob(job)&&await unitOfWork.ApplicationUsersJobs.FindAsync(aj=>aj.ApplicationUserId==userId&&aj.JobId==jobId)==null) {
-                    await unitOfWork.ApplicationUsersJobs.AddAsync(new ApplicationUserJob()
-                    {
-                        JobId = jobId,
-                        ApplicationUserId = userId
-                    });
-                    unitOfWork.Complete();
-                    response.IsSuccess = true;
-                    response.StatusCode = HttpStatusCode.OK;
-                    return Ok(response);
-                }
-                else
-                {
-                    response.ErrorMessages.Add("Job Is Closed");
-                    return BadRequest(response);
-                }
-            }
-            catch (Exception e)
-            {
-                response.ErrorMessages.Add(e.ToString());
-                return BadRequest(response);
-            }
+           var userId = User.Claims.Where(a => a.Type == "uid").FirstOrDefault().Value;
+            var response = await jobsService.ApplyToJob(jobId,userId);
+            if (response.IsSuccess) return Ok(response);
+            return BadRequest(response);
         }
 
     }

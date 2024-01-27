@@ -1,11 +1,6 @@
-﻿using AutoMapper;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using RecruitmentTest.Domain;
-using RecruitmentTest.Domain.Dtos.Jobs;
-using RecruitmentTest.Domain.Dtos;
-using System.Net;
+using RecruitmentTest.Services.IServices;
 
 namespace RecruitmentTest.Api.Controllers
 {
@@ -14,32 +9,19 @@ namespace RecruitmentTest.Api.Controllers
     [ApiController]
     public class CategoriesController : ControllerBase
     {
-        private readonly IMapper mapper;
-        private readonly IUnitOfWork unitOfWork;
+        private readonly ICategoriesService categoriesService;
 
-        public CategoriesController(IMapper mapper, IUnitOfWork unitOfWork)
+        public CategoriesController(ICategoriesService categoriesService)
         {
-            this.mapper = mapper;
-            this.unitOfWork = unitOfWork;
+            this.categoriesService = categoriesService;
         }
 
         [HttpGet]
         public async Task<IActionResult> GetAllCategories()
         {
-            var response = new ApiResponse() { IsSuccess = false, StatusCode = HttpStatusCode.BadRequest };
-
-            try
-            {
-                var data = await unitOfWork.Categories.GetAllAsync();
-                response.IsSuccess = true;
-                response.Result = mapper.Map<IEnumerable<SelectListDto>>(data);
-                return Ok(response);
-            }
-            catch (Exception e)
-            {
-                response.ErrorMessages.Add(e.ToString());
-                return BadRequest(response);
-            }
+            var response = await categoriesService.GetAllCategories();
+            if (response.IsSuccess) return Ok(response);
+            return BadRequest(response);
         }
     }
 }

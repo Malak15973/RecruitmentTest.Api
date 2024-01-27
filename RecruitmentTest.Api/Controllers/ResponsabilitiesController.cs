@@ -1,10 +1,6 @@
-﻿using AutoMapper;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using RecruitmentTest.Domain;
-using RecruitmentTest.Domain.Dtos;
-using System.Net;
+using RecruitmentTest.Services.IServices;
 
 namespace RecruitmentTest.Api.Controllers
 {
@@ -13,33 +9,19 @@ namespace RecruitmentTest.Api.Controllers
     [ApiController]
     public class ResponsabilitiesController : ControllerBase
     {
-        private readonly IMapper mapper;
-        private readonly IUnitOfWork unitOfWork;
+        private readonly IResponsabilitiesService responsabilitiesService;
 
-        public ResponsabilitiesController(IMapper mapper, IUnitOfWork unitOfWork)
+        public ResponsabilitiesController(IResponsabilitiesService responsabilitiesService)
         {
-            this.mapper = mapper;
-            this.unitOfWork = unitOfWork;
+            this.responsabilitiesService = responsabilitiesService;
         }
 
         [HttpGet]
         public async Task<IActionResult> GetAllResponsabilities()
         {
-            var response = new ApiResponse() { IsSuccess = false, StatusCode = HttpStatusCode.BadRequest };
-
-            try
-            {
-                var data = await unitOfWork.Responsabilities.GetAllAsync();
-
-                response.IsSuccess = true;
-                response.Result = mapper.Map<IEnumerable<SelectListDto>>(data);
-                return Ok(response);
-            }
-            catch (Exception e)
-            {
-                response.ErrorMessages.Add(e.ToString());
-                return BadRequest(response);
-            }
+            var response = await responsabilitiesService.GetAllResponsabilities();
+            if (response.IsSuccess) return Ok(response);
+            return BadRequest(response);
         }
     }
 }

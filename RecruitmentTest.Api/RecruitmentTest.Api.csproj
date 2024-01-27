@@ -19,6 +19,7 @@
   <ItemGroup>
     <ProjectReference Include="..\RecruitmentTest.DataAccess\RecruitmentTest.DataAccess.csproj" />
     <ProjectReference Include="..\RecruitmentTest.Domain\RecruitmentTest.Domain.csproj" />
+    <ProjectReference Include="..\RecruitmentTest.Services\RecruitmentTest.Services.csproj" />
   </ItemGroup>
 
 </Project>

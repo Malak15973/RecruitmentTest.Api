@@ -1,10 +1,6 @@
-﻿using AutoMapper;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using RecruitmentTest.Domain;
-using RecruitmentTest.Domain.Dtos;
-using System.Net;
+using RecruitmentTest.Services.IServices;
 
 namespace RecruitmentTest.Api.Controllers
 {
@@ -13,33 +9,19 @@ namespace RecruitmentTest.Api.Controllers
     [ApiController]
     public class SkillsController : ControllerBase
     {
-        private readonly IMapper mapper;
-        private readonly IUnitOfWork unitOfWork;
+        private readonly ISkillsService skillsService;
 
-        public SkillsController(IMapper mapper, IUnitOfWork unitOfWork)
+        public SkillsController(ISkillsService skillsService)
         {
-            this.mapper = mapper;
-            this.unitOfWork = unitOfWork;
+            this.skillsService = skillsService;
         }
 
         [HttpGet]
         public async Task<IActionResult> GetAllSkills()
         {
-            var response = new ApiResponse() { IsSuccess = false, StatusCode = HttpStatusCode.BadRequest };
-
-            try
-            {
-                var data = await unitOfWork.Skills.GetAllAsync();
-
-                response.IsSuccess = true;
-                response.Result = mapper.Map<IEnumerable<SelectListDto>>(data);
-                return Ok(response);
-            }
-            catch (Exception e)
-            {
-                response.ErrorMessages.Add(e.ToString());
-                return BadRequest(response);
-            }
+            var response = await skillsService.GetAllSkills();
+            if (response.IsSuccess) return Ok(response);
+            return BadRequest(response);
         }
     }
 }

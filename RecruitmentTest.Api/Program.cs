@@ -11,6 +11,8 @@ using RecruitmentTest.Domain.Dtos;
 using RecruitmentTest.Domain.Mapper;
 using RecruitmentTest.Domain.Models;
 using RecruitmentTest.Domain.Settings;
+using RecruitmentTest.Services.IServices;
+using RecruitmentTest.Services.Services;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -91,6 +93,14 @@ var mappingConfig = new MapperConfiguration(mc =>
 IMapper mapper = mappingConfig.CreateMapper();
 builder.Services.AddSingleton(mapper);
 builder.Services.AddTransient<IUnitOfWork, UnitOfWork>();
+
+builder.Services.AddScoped<IJobsService, JobsService>();
+builder.Services.AddScoped<ISkillsService, SkillsService>();
+builder.Services.AddScoped<IResponsabilitiesService, ResponsabilitiesService>();
+builder.Services.AddScoped<ICategoriesService, CategoriesService>();
+builder.Services.AddScoped<IAccountService, AccountService>();
+
+
 
 builder.Services.AddAuthentication(options =>
 {
