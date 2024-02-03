@@ -15,6 +15,9 @@ using System.IdentityModel.Tokens.Jwt;
 using Microsoft.IdentityModel.Tokens;
 using RecruitmentTest.Domain.Helpers;
 using System.Net;
+using System.Security.Cryptography;
+using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 
 namespace RecruitmentTest.Services.Services
 {
@@ -24,7 +27,11 @@ namespace RecruitmentTest.Services.Services
         private readonly JWTSettings jwt;
         private readonly UserManager<ApplicationUser> userManager;
         private readonly SignInManager<ApplicationUser> signInManager;
-        public AccountService(IOptions<JWTSettings> jwt, UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager)
+
+        public AccountService(IOptions<JWTSettings> jwt,
+            UserManager<ApplicationUser> userManager,
+            SignInManager<ApplicationUser> signInManager
+            )
         {
             this.jwt = jwt.Value;
             this.userManager = userManager;
@@ -43,7 +50,17 @@ namespace RecruitmentTest.Services.Services
                     {
                         var jwtSecurityToken = await CreateJwtToken(user);
                         var roles = await userManager.GetRolesAsync(user);
-                        response.Result = new { Token = new JwtSecurityTokenHandler().WriteToken(jwtSecurityToken), ExpiresOn = jwtSecurityToken.ValidTo, Role = roles.FirstOrDefault() };
+                        var refreshToken = GenerateRefreshToken();
+
+                        user.RefreshToken = refreshToken;
+                        user.RefreshTokenExpiryTime = DateTime.Now.AddDays(jwt.RefreshTokenValidityInDays);
+                        await userManager.UpdateAsync(user);
+                        response.Result = new { 
+                            Token = new JwtSecurityTokenHandler().WriteToken(jwtSecurityToken),
+                            ExpiresOn = jwtSecurityToken.ValidTo,
+                            Role = roles.FirstOrDefault(),
+                            RefreshToken = refreshToken
+                        };
                         response.IsSuccess = true;
                         response.StatusCode = HttpStatusCode.OK;
                         return response;
@@ -98,6 +115,39 @@ namespace RecruitmentTest.Services.Services
                 return response;
             }
         }
+
+        public async Task<ApiResponse> RefreshToken(TokenDto model)
+        {
+            var response = new ApiResponse() { IsSuccess = false, StatusCode = HttpStatusCode.BadRequest };
+            try
+            {
+                var user = await userManager.Users.FirstOrDefaultAsync(u=>u.RefreshToken== model.RefreshToken);
+                if (user == null || user.RefreshTokenExpiryTime <= DateTime.Now)
+                {
+                    response.ErrorMessages.Add("Invalid token");
+                    return response;
+                }
+                var newAccessToken = await CreateJwtToken(user);
+                var newRefreshToken = GenerateRefreshToken();
+
+                user.RefreshToken = newRefreshToken;
+                await userManager.UpdateAsync(user);
+                response.IsSuccess = true;
+                response.StatusCode = HttpStatusCode.OK;
+                response.Result = new
+                {
+                    AccessToken = new JwtSecurityTokenHandler().WriteToken(newAccessToken),
+                    RefreshToken = newRefreshToken
+                };
+                return response;
+            }
+            catch (Exception e)
+            {
+                response.ErrorMessages.Add(e.ToString());
+                return response;
+            }
+        }
+
         private async Task<JwtSecurityToken> CreateJwtToken(ApplicationUser user)
         {
             var symmetricSecurityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwt.Key));
@@ -121,10 +171,18 @@ namespace RecruitmentTest.Services.Services
                 issuer: jwt.Issuer,
                 audience: jwt.Audience,
                 claims: claims,
-                expires: DateTime.Now.AddDays(jwt.DurationInDays),
+                expires: DateTime.Now.AddMinutes(jwt.TokenValidityInMinutes),
                 signingCredentials: signingCredentials);
 
             return jwtSecurityToken;
+        }
+
+        private static string GenerateRefreshToken()
+        {
+            var randomNumber = new byte[64];
+            using var rng = RandomNumberGenerator.Create();
+            rng.GetBytes(randomNumber);
+            return Convert.ToBase64String(randomNumber);
         }
     }
 }

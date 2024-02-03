@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Microsoft.AspNetCore.Http;
 using RecruitmentTest.Domain.Dtos;
 using RecruitmentTest.Domain.Dtos.Jobs;
 using RecruitmentTest.Domain.Helpers;
@@ -13,7 +14,8 @@ namespace RecruitmentTest.Domain.Mapper
 {
     public class MappingProfile : Profile
     {
-        public MappingProfile()
+
+        public MappingProfile(IHttpContextAccessor httpContextAccessor)
         {
             CreateMap<Category, SelectListDto>().ReverseMap();
             CreateMap<Skill, SelectListDto>().ReverseMap();
@@ -40,7 +42,6 @@ namespace RecruitmentTest.Domain.Mapper
                 ForMember(des => des.JobSkills, src => src.MapFrom(src => src.JobSkills.Select(j => new JobSkill() { SkillId = j }))).
                 ForMember(des => des.JobResponsabilities, src => src.MapFrom(src => src.JobResponsabilities.Select(j => new JobResponsability() { ResponsabilityId = j })))
                 ;
-
         }
     }
 }

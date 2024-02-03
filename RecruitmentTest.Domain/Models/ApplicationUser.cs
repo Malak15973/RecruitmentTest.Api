@@ -11,6 +11,8 @@ namespace RecruitmentTest.Domain.Models
     {
         #region Properties
         public string Name { get; set; }
+        public string RefreshToken { get; set; }
+        public DateTime RefreshTokenExpiryTime { get; set; }
         #endregion
         #region Navigation Properties
         public ICollection<ApplicationUserJob> ApplicationUserJobs { get; set; } 

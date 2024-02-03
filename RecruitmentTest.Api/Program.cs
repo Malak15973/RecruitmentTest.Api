@@ -1,5 +1,6 @@
 using AutoMapper;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -8,6 +9,7 @@ using Microsoft.OpenApi.Models;
 using RecruitmentTest.DataAccess;
 using RecruitmentTest.Domain;
 using RecruitmentTest.Domain.Dtos;
+using RecruitmentTest.Domain.Filters;
 using RecruitmentTest.Domain.Mapper;
 using RecruitmentTest.Domain.Models;
 using RecruitmentTest.Domain.Settings;
@@ -51,8 +53,9 @@ builder.Services.AddSwaggerGen(c => {
     });
 });
 
-builder.Services.AddControllersWithViews()
-  .AddNewtonsoftJson(options => 
+builder.Services.AddControllersWithViews(options => {
+    options.Filters.Add<ModelStateValidationFilterAttribute>();
+}).AddNewtonsoftJson(options => 
   options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore
 );
 builder.Services.Configure<ApiBehaviorOptions>(options =>
@@ -85,15 +88,20 @@ builder.Services.Configure<IdentityOptions>(options =>
     options.Password.RequiredLength = 8;
     options.Password.RequiredUniqueChars = 0;
 });
+#pragma warning disable ASP0000 // Do not call 'IServiceCollection.BuildServiceProvider' in 'ConfigureServices'
+var httpContextAccessor = builder.Services.BuildServiceProvider().GetRequiredService<IHttpContextAccessor>();
+#pragma warning restore ASP0000 // Do not call 'IServiceCollection.BuildServiceProvider' in 'ConfigureServices'
 
 var mappingConfig = new MapperConfiguration(mc =>
 {
-    mc.AddProfile(new MappingProfile());
+    mc.AddProfile(new MappingProfile(httpContextAccessor));
 });
 IMapper mapper = mappingConfig.CreateMapper();
 builder.Services.AddSingleton(mapper);
-builder.Services.AddTransient<IUnitOfWork, UnitOfWork>();
 
+
+builder.Services.AddTransient<IUnitOfWork, UnitOfWork>();
+builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
 builder.Services.AddScoped<IJobsService, JobsService>();
 builder.Services.AddScoped<ISkillsService, SkillsService>();
 builder.Services.AddScoped<IResponsabilitiesService, ResponsabilitiesService>();
@@ -116,11 +124,14 @@ builder.Services.AddAuthentication(options =>
         ValidateIssuer = true,
         ValidateAudience = true,
         ValidateLifetime = true,
+        ClockSkew = TimeSpan.Zero,
         ValidIssuer = Configuration["JWT:Issuer"],
         ValidAudience = Configuration["JWT:Audience"],
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Configuration["JWT:Key"]))
     };
 });
+
+builder.Services.AddHttpContextAccessor();
 
 var app = builder.Build();
 

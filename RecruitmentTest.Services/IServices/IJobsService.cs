@@ -15,7 +15,7 @@ namespace RecruitmentTest.Services.IServices
         Task<ApiResponse> UpdateJob(int id, UpdateJobDto model);
         Task<ApiResponse> GetJob(int id);
         Task<PaggingApiResponse> GetAllJobs(int page = 1,int pageSize = 3,string name = "");
-        Task<PaggingApiResponse> GetNotAppliedJobs(string userId, int page = 1, int pageSize = 3, string name = "");
-        Task<ApiResponse> ApplyToJob(int jobId,string userId);
+        Task<PaggingApiResponse> GetNotAppliedJobs(int page = 1, int pageSize = 3, string name = "");
+        Task<ApiResponse> ApplyToJob(int jobId);
     }
 }

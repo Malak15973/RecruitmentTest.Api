@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Microsoft.AspNetCore.Http;
 using RecruitmentTest.Domain;
 using RecruitmentTest.Domain.Dtos;
 using RecruitmentTest.Domain.Dtos.Jobs;
@@ -18,11 +19,13 @@ namespace RecruitmentTest.Services.Services
     {
         private readonly IUnitOfWork unitOfWork;
         private readonly IMapper mapper;
+        private readonly IHttpContextAccessor httpContextAccessor;
 
-        public JobsService(IUnitOfWork unitOfWork,IMapper mapper)
+        public JobsService(IUnitOfWork unitOfWork,IMapper mapper, IHttpContextAccessor httpContextAccessor)
         {
             this.unitOfWork = unitOfWork;
             this.mapper = mapper;
+            this.httpContextAccessor = httpContextAccessor;
         }
         public async Task<ApiResponse> AddJob(AddJobDto model)
         {
@@ -67,7 +70,7 @@ namespace RecruitmentTest.Services.Services
             }
         }
 
-        public async Task<ApiResponse> ApplyToJob(int jobId, string userId)
+        public async Task<ApiResponse> ApplyToJob(int jobId)
         {
             var response = new ApiResponse() { IsSuccess = false, StatusCode = HttpStatusCode.BadRequest };
 
@@ -82,7 +85,7 @@ namespace RecruitmentTest.Services.Services
                     response.ErrorMessages.Add($"No Job With This Id {jobId}");
                     return response;
                 }
-
+                var userId = httpContextAccessor.HttpContext.User.Claims.FirstOrDefault(c => c.Type == "uid").Value;
                 //check is job opened and validate that the user does not apply to this job before
                 if (JobsHelper.IsOpenJob(job) && await unitOfWork.ApplicationUsersJobs.FindAsync(aj => aj.ApplicationUserId == userId && aj.JobId == jobId) == null)
                 {
@@ -187,12 +190,14 @@ namespace RecruitmentTest.Services.Services
             }
         }
 
-        public async Task<PaggingApiResponse> GetNotAppliedJobs(string userId,int page = 1, int pageSize = 3, string name = "")
+        public async Task<PaggingApiResponse> GetNotAppliedJobs(int page = 1, int pageSize = 3, string name = "")
         {
             var response = new PaggingApiResponse() { IsSuccess = false, StatusCode = HttpStatusCode.BadRequest };
 
             try
             {
+                var userId = httpContextAccessor.HttpContext.User.Claims.FirstOrDefault(c => c.Type == "uid").Value;
+
                 var data = await unitOfWork.Jobs.GetAllAsync(filter: f => f.Name.Contains(name) && !f.JobApplicationUsers.Any(ja => ja.ApplicationUserId == userId), skip: (page - 1) * pageSize, take: pageSize,
                     includeProperties: "JobResponsabilities.Responsability,JobSkills.Skill,Category,JobApplicationUsers");
 

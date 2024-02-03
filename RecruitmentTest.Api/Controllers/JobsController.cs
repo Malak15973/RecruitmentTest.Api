@@ -23,19 +23,9 @@ namespace RecruitmentTest.Api.Controllers
         [HttpPost]
         public async Task<IActionResult> AddJob([FromBody] AddJobDto model)
         {
-            var response = new ApiResponse() { IsSuccess = false, StatusCode = HttpStatusCode.BadRequest };
-
-            if (!ModelState.IsValid)
-            {
-                response.ErrorMessages.AddRange(GetErrorMessagesHelper.GetErrorMessages(ModelState));
-                return BadRequest(response);
-            }
-            else
-            {
-                response =await jobsService.AddJob(model);
-                if (response.IsSuccess) return Ok(response);
-                return BadRequest(response);
-            }
+            var response =await jobsService.AddJob(model);
+            if (response.IsSuccess) return Ok(response);
+            return BadRequest(response);
         }
             
 
@@ -52,19 +42,9 @@ namespace RecruitmentTest.Api.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateJob(int id, [FromBody] UpdateJobDto model)
         {
-            var response = new ApiResponse() { IsSuccess = false, StatusCode = HttpStatusCode.BadRequest };
-
-            if (!ModelState.IsValid)
-            {
-                response.ErrorMessages.AddRange(GetErrorMessagesHelper.GetErrorMessages(ModelState));
-                return BadRequest(response);
-            }
-            else
-            {
-                response = await jobsService.UpdateJob(id,model);
-                if (response.IsSuccess) return Ok(response);
-                return BadRequest(response);
-            }
+            var response = await jobsService.UpdateJob(id,model);
+            if (response.IsSuccess) return Ok(response);
+            return BadRequest(response);
         }
 
         [Authorize(Roles = "Admin")]
@@ -89,9 +69,7 @@ namespace RecruitmentTest.Api.Controllers
 
         public async Task<IActionResult> GetNotAppliedJobs([FromQuery] int page = 1, [FromQuery] int pageSize = 3, [FromQuery] string name = "")
         {
-            var userId = User.Claims.Where(a => a.Type == "uid").FirstOrDefault().Value;
-
-            var response = await jobsService.GetNotAppliedJobs(userId,page, pageSize, name);
+            var response = await jobsService.GetNotAppliedJobs(page, pageSize, name);
             if (response.IsSuccess) return Ok(response);
             return BadRequest(response);
         }
@@ -101,8 +79,7 @@ namespace RecruitmentTest.Api.Controllers
         [HttpPost("{jobId}")]
         public async Task<IActionResult> ApplyToJob(int jobId)
         {
-           var userId = User.Claims.Where(a => a.Type == "uid").FirstOrDefault().Value;
-            var response = await jobsService.ApplyToJob(jobId,userId);
+            var response = await jobsService.ApplyToJob(jobId);
             if (response.IsSuccess) return Ok(response);
             return BadRequest(response);
         }

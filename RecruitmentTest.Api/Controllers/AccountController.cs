@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using RecruitmentTest.Domain.Dtos;
 using RecruitmentTest.Domain.Dtos.Account;
 using RecruitmentTest.Domain.Helpers;
@@ -23,38 +24,25 @@ namespace RecruitmentTest.Api.Controllers
         [HttpPost]
         public async Task<IActionResult> Login([FromBody] LoginDto model)
         {
-            var response = new ApiResponse() { IsSuccess = false, StatusCode = HttpStatusCode.BadRequest };
-
-            if (!ModelState.IsValid)
-            {
-                response.ErrorMessages.AddRange(GetErrorMessagesHelper.GetErrorMessages(ModelState));
-                return BadRequest(response);
-            }
-            else
-            {
-                response = await accountService.Login(model);
-                if (response.IsSuccess) return Ok(response);
-                return BadRequest(response);
-            }
+            var response = await accountService.Login(model);
+            if (response.IsSuccess) return Ok(response);
+            return BadRequest(response);
         }
 
         [HttpPost]
         public async Task<IActionResult> Register([FromBody] RegisterDto model)
         {
-            var response = new ApiResponse() { IsSuccess = false, StatusCode = HttpStatusCode.BadRequest };
-
-            if (!ModelState.IsValid)
-            {
-                response.ErrorMessages.AddRange(GetErrorMessagesHelper.GetErrorMessages(ModelState));
-                return BadRequest(response);
-            }
-            else
-            {
-                response = await accountService.Register(model);
-                if (response.IsSuccess) return Ok(response);
-                return BadRequest(response);
-            }
+            var response = await accountService.Register(model);
+            if (response.IsSuccess) return Ok(response);
+            return BadRequest(response);
         }
-
+        
+        [HttpPost]
+        public async Task<IActionResult> RefreshToken([FromBody] TokenDto model)
+        {
+            var response = await accountService.RefreshToken(model);
+            if (response.IsSuccess) return Ok(response);
+            return BadRequest(response);
+        }
     }
 }

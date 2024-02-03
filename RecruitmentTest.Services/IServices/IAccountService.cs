@@ -12,5 +12,6 @@ namespace RecruitmentTest.Services.IServices
     {
         Task<ApiResponse> Login(LoginDto model);
         Task<ApiResponse> Register(RegisterDto model);
+        Task<ApiResponse> RefreshToken(TokenDto model);
     }
 }
